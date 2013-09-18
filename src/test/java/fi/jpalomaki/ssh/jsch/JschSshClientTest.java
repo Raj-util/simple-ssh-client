@@ -1,12 +1,10 @@
 package fi.jpalomaki.ssh.jsch;
 
 import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
-
 import static org.junit.Assert.*;
 import fi.jpalomaki.ssh.Result;
 import fi.jpalomaki.ssh.SshClient;
@@ -113,5 +111,20 @@ public final class JschSshClientTest {
         Result result = sshClient.executeCommand("cat -", stdin, userAtHost);
         assertEquals(0, result.exitCode);
         assertEquals("secretÄ", result.stdoutAsText().trim());
+    }
+    
+    @Test(expected = SshClientException.class, timeout = 5000)
+    public void testConnectTimeout() {
+        Options options = new Options(4500, 0, 64, 64, Collections.singletonMap("StrictHostKeyChecking", "no"));
+        UserAtHost atUnreachableHost = new UserAtHost("test", "1.2.3.4");
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
+        sshClient.executeCommand("whoami", atUnreachableHost);
+    }
+    
+    @Test(expected = SshClientException.class, timeout = 3000)
+    public void testSessionTimeout() {
+        Options options = new Options(0, 2500, 64, 64, Collections.singletonMap("StrictHostKeyChecking", "no"));
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
+        sshClient.executeCommand("sleep 3s", userAtHost);
     }
 }

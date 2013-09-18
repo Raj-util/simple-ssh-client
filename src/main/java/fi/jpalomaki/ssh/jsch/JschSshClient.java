@@ -5,12 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
-
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-
 import fi.jpalomaki.ssh.SshClient;
 import fi.jpalomaki.ssh.SshClientException;
 import fi.jpalomaki.ssh.UserAtHost;
@@ -100,12 +98,11 @@ public final class JschSshClient implements SshClient {
             session.setConfig(entry.getKey(), entry.getValue());
         }
         session.setConfig("PreferredAuthentications", "publickey");
-        session.setTimeout(options.sessionTimeout);
         session.connect(options.connectTimeout);
         return session;
     }
     
-    private Result doExecuteCommand(String command, byte[] bytesToStdin, Session session) throws JSchException {
+    private Result doExecuteCommand(String command, byte[] bytesToStdin, Session session) throws JSchException, SshClientException {
         ByteArrayInputStream stdin = new ByteArrayInputStream(bytesToStdin);
         ByteArrayOutputStream stdout = new ByteArrayOutputStream(options.maxStdoutBytes);
         ByteArrayOutputStream stderr = new ByteArrayOutputStream(options.maxStderrBytes);
@@ -122,13 +119,20 @@ public final class JschSshClient implements SshClient {
     }
     
     private void waitUntilClosed(ChannelExec executionChannel) {
+        long waitTimeThusFar = 0L;
+        long maxWaitTime = options.sessionTimeout;
         do {
             try {
                 Thread.sleep(CHANNEL_CLOSED_POLL_INTERVAL);
+                waitTimeThusFar += CHANNEL_CLOSED_POLL_INTERVAL;
             } catch (InterruptedException e) {
                 // Ignore
             }
-        } while (!executionChannel.isClosed());
+        } while (!executionChannel.isClosed() && waitTimeThusFar < maxWaitTime);
+        if (!executionChannel.isClosed()) {
+            executionChannel.disconnect();
+            throw new SshClientException("Session timeout (" + maxWaitTime + " ms) exceeded");
+        }
     }
     
     /**
@@ -137,12 +141,15 @@ public final class JschSshClient implements SshClient {
     public static class Options {
         
         /**
-         * Connect timeout in milliseconds. Defaults to 5000 milliseconds.
+         * Connect timeout in milliseconds. Defaults to 5 seconds. A value of 0 designates no timeout.
          */
         public final int connectTimeout;
         
         /**
          * Session timeout in milliseconds. Defaults to 0, i.e. no timeout.
+         * 
+         * Note: This is a hard timeout to limit the duration of the SSH session
+         * and it is enforced regardless of whether the session is idle or not.
          */
         public final int sessionTimeout;
         
