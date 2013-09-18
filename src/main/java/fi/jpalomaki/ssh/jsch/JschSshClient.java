@@ -37,8 +37,8 @@ public final class JschSshClient implements SshClient {
      * Constructs a new {@link JschSshClient} with a default known hosts
      * file (<code>~/.ssh/known_hosts</code>) and default {@link Options}.
      * 
-     * Note that we use strict host key checking by default, which means
-     * that a valid host key must be present in the known hosts file.
+     * Note that strict host key checking is used by default, which means
+     * that a valid host key must be present in the SSH known hosts file.
      */
     public JschSshClient(String privateKey, String passphrase) {
         this(privateKey, passphrase, "~/.ssh/known_hosts", new Options());
@@ -76,7 +76,7 @@ public final class JschSshClient implements SshClient {
     @Override
     public Result executeCommand(String command, ByteBuffer stdin, UserAtHost userAtHost) throws SshClientException {
         Assert.hasText(command, "Command must not be null or empty");
-        Assert.notNull(stdin, "Stdin must not be null");
+        Assert.notNull(stdin, "Standard in must not be null (but may be empty)");
         Assert.notNull(userAtHost, "User at host must not be null");
         Session session = null;
         try {
