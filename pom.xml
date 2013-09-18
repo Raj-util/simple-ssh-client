@@ -2,11 +2,34 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-
+    
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+    
     <groupId>fi.jpalomaki.ssh</groupId>
     <artifactId>simple-ssh-client</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>Simple SSH client for Java</name>
+    <packaging>jar</packaging>
+    
+    <name>simple-ssh-client</name>
+    <description>Simple SSH client for Java</description>
+    <url>https://github.com/jpalomaki/sundown-java-binding</url>
+    
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/jpalomaki/simple-ssh-client</url>
+        <connection>scm:git:git@github.com:jpalomaki/simple-ssh-client.git</connection>
+    </scm>
 
     <developers>
         <developer>
@@ -65,9 +88,23 @@
                 <executions>
                     <execution>
                         <id>attach-sources</id>
-                        <phase>verify</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>jar-javadocs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
