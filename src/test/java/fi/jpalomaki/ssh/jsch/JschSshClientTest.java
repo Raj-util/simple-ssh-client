@@ -61,7 +61,7 @@ public final class JschSshClientTest {
         Options options = new Options(0, 0, 64, 64, Collections.singletonMap("StrictHostKeyChecking", "no"));
         File knownHosts = File.createTempFile("testAutoCreatedKnownHostsFile", "known_hosts", new File("/tmp"));
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test_nopass", null, knownHosts.getAbsolutePath(), options);
-        Result result = sshClient.executeCommand("whoami", userAtHost);
+        Result result = sshClient.executeCommand("sleep 1s; whoami", userAtHost);
         assertEquals(0, result.exitCode);
     }
     

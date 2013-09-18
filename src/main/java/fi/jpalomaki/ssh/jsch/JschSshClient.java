@@ -114,24 +114,27 @@ public final class JschSshClient implements SshClient {
         executionChannel.setOutputStream(stdout);
         executionChannel.setErrStream(stderr);
         executionChannel.connect();
-        waitUntilClosed(executionChannel);
+        waitUntilChannelClosed(executionChannel);
         return new Result(executionChannel.getExitStatus(), stdout.toByteArray(), stderr.toByteArray());
     }
     
-    private void waitUntilClosed(ChannelExec executionChannel) {
+    private void waitUntilChannelClosed(ChannelExec executionChannel) {
         long waitTimeThusFar = 0L;
-        long maxWaitTime = options.sessionTimeout;
+        long sessionTimeout = options.sessionTimeout;
         do {
             try {
                 Thread.sleep(CHANNEL_CLOSED_POLL_INTERVAL);
                 waitTimeThusFar += CHANNEL_CLOSED_POLL_INTERVAL;
+                if (sessionTimeout > 0L && waitTimeThusFar > sessionTimeout) {
+                    break;
+                }
             } catch (InterruptedException e) {
                 // Ignore
             }
-        } while (!executionChannel.isClosed() && waitTimeThusFar < maxWaitTime);
+        } while (!executionChannel.isClosed());
         if (!executionChannel.isClosed()) {
             executionChannel.disconnect();
-            throw new SshClientException("Session timeout (" + maxWaitTime + " ms) exceeded");
+            throw new SshClientException("Session timeout (" + sessionTimeout + " ms) exceeded");
         }
     }
     
