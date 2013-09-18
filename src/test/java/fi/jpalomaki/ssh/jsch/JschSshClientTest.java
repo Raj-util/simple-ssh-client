@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import static org.junit.Assert.*;
@@ -14,10 +15,8 @@ import fi.jpalomaki.ssh.UserAtHost;
 import fi.jpalomaki.ssh.jsch.JschSshClient.Options;
 
 /**
- * Tests for {@link JschSshClient}. Tests assume a user "test" is present on the local host,
+ * Tests for {@link JschSshClient}. Tests assume user "test" is available on the local host,
  * and has added the public keys under src/test/resources in his/her ~/.ssh/authorized_keys.
- * 
- * TODO: Add moar tests
  */
 public final class JschSshClientTest {
     
@@ -33,6 +32,30 @@ public final class JschSshClientTest {
     public void testIncorrectPrivateKeyPassphrase() {
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka2");
         sshClient.executeCommand("whoami", userAtHost);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNullCommand() {
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka");
+        sshClient.executeCommand(null, userAtHost);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testEmptyCommand() {
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka");
+        sshClient.executeCommand(" ", userAtHost);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNullUserAtHost() {
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka");
+        sshClient.executeCommand("whoami", null);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testNullStdin() {
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka");
+        sshClient.executeCommand("cat -", null, userAtHost);
     }
     
     @Test
@@ -81,5 +104,14 @@ public final class JschSshClientTest {
         Result result = sshClient.executeCommand("whoami", userAtHost);
         assertEquals(0, result.exitCode);
         assertEquals("test", result.stdoutAsText().trim());
+    }
+    
+    @Test
+    public void testCatStdin() {
+        ByteBuffer stdin = ByteBuffer.wrap("secretÄ".getBytes());
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka");
+        Result result = sshClient.executeCommand("cat -", stdin, userAtHost);
+        assertEquals(0, result.exitCode);
+        assertEquals("secretÄ", result.stdoutAsText().trim());
     }
 }

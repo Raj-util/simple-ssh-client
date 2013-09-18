@@ -1,12 +1,16 @@
 package fi.jpalomaki.ssh.jsch;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+
 import fi.jpalomaki.ssh.SshClient;
 import fi.jpalomaki.ssh.SshClientException;
 import fi.jpalomaki.ssh.UserAtHost;
@@ -16,9 +20,7 @@ import fi.jpalomaki.ssh.util.Assert;
 /**
  * Jsch-based {@link SshClient} implementation.
  * 
- * Only public key authentication is supported.
- * 
- * TODO: Add support for passing in stdin.
+ * Only publickey authentication is supported.
  * 
  * @author jpalomaki
  */
@@ -65,12 +67,21 @@ public final class JschSshClient implements SshClient {
      */
     @Override
     public Result executeCommand(String command, UserAtHost userAtHost) throws SshClientException {
+        return executeCommand(command, ByteBuffer.wrap(new byte[0]), userAtHost);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Result executeCommand(String command, ByteBuffer stdin, UserAtHost userAtHost) throws SshClientException {
         Assert.hasText(command, "Command must not be null or empty");
+        Assert.notNull(stdin, "Stdin must not be null");
         Assert.notNull(userAtHost, "User at host must not be null");
         Session session = null;
         try {
             session = newSessionFor(userAtHost);
-            return doExecuteCommand(command, session);
+            return doExecuteCommand(command, stdin.array(), session);
         } catch (JSchException e) {
             throw new SshClientException("Failed to execute command '" + command + "' on " + userAtHost, e);
         } finally {
@@ -78,7 +89,7 @@ public final class JschSshClient implements SshClient {
                 session.disconnect();
             }
         }
-    } 
+    }
 
     private Session newSessionFor(UserAtHost userAtHost) throws JSchException {
         JSch jsch = new JSch();
@@ -94,11 +105,15 @@ public final class JschSshClient implements SshClient {
         return session;
     }
     
-    private Result doExecuteCommand(String command, Session session) throws JSchException {
+    private Result doExecuteCommand(String command, byte[] bytesToStdin, Session session) throws JSchException {
+        ByteArrayInputStream stdin = new ByteArrayInputStream(bytesToStdin);
         ByteArrayOutputStream stdout = new ByteArrayOutputStream(options.maxStdoutBytes);
         ByteArrayOutputStream stderr = new ByteArrayOutputStream(options.maxStderrBytes);
         ChannelExec executionChannel = (ChannelExec)session.openChannel("exec");
         executionChannel.setCommand(command);
+        if (stdin.available() > 0) {
+            executionChannel.setInputStream(stdin);
+        }
         executionChannel.setOutputStream(stdout);
         executionChannel.setErrStream(stderr);
         executionChannel.connect();
