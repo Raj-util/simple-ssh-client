@@ -5,7 +5,9 @@ This library is minimal by design. For more advanced SSH usage, I recommend
 to invoke Ansible remotely, and have Ansible (playbooks) do the real work.
 
 TODO: Write up sample code here
+
 TODO: Publish to Sonatype OSS repo
+
 TODO: Ansible playbook invocation sample
 
 Utilizes the [Jsch](http://www.jcraft.com/jsch) SSH2 library.
