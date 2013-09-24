@@ -16,7 +16,7 @@
     
     <name>simple-ssh-client</name>
     <description>Simple SSH client for Java</description>
-    <url>https://github.com/jpalomaki/sundown-java-binding</url>
+    <url>https://github.com/jpalomaki/simple-ssh-client</url>
     
     <licenses>
         <license>
@@ -49,6 +49,7 @@
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.50</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

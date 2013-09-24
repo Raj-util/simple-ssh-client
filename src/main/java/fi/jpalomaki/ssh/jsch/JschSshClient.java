@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
@@ -18,7 +19,7 @@ import fi.jpalomaki.ssh.util.Assert;
 /**
  * Jsch-based {@link SshClient} implementation.
  * 
- * Only publickey authentication is supported.
+ * Only public key authentication is supported.
  * 
  * @author jpalomaki
  */
@@ -46,7 +47,7 @@ public final class JschSshClient implements SshClient {
      * Constructs a new {@link JschSshClient} with the given parameters.
      * 
      * @param privateKey Path to private key file, not <code>null</code> or empty
-     * @param passphrase Private key passphrase, may be <code>null</code> for no passphrase
+     * @param passphrase Private key passphrase, may be <code>null</code> for empty passphrase
      * @param knownHosts Path to known hosts file, not <code>null</code> or empty
      * @param options Set of SSH client options, not <code>null</code>
      */
@@ -98,21 +99,21 @@ public final class JschSshClient implements SshClient {
             session.setConfig(entry.getKey(), entry.getValue());
         }
         session.setConfig("PreferredAuthentications", "publickey");
-        session.connect(options.connectTimeout);
+        session.connect((int)options.connectTimeout);
         return session;
     }
     
     private Result doExecuteCommand(String command, byte[] bytesToStdin, Session session) throws JSchException, SshClientException {
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
         ByteArrayInputStream stdin = new ByteArrayInputStream(bytesToStdin);
-        ByteArrayOutputStream stdout = new ByteArrayOutputStream(options.maxStdoutBytes);
-        ByteArrayOutputStream stderr = new ByteArrayOutputStream(options.maxStderrBytes);
         ChannelExec executionChannel = (ChannelExec)session.openChannel("exec");
         executionChannel.setCommand(command);
         if (stdin.available() > 0) {
             executionChannel.setInputStream(stdin);
         }
-        executionChannel.setOutputStream(stdout);
-        executionChannel.setErrStream(stderr);
+        executionChannel.setOutputStream(new BoundedOutputStream(options.maxStdoutBytes, stdout));
+        executionChannel.setErrStream(new BoundedOutputStream(options.maxStderrBytes, stderr));
         executionChannel.connect();
         waitUntilChannelClosed(executionChannel);
         return new Result(executionChannel.getExitStatus(), stdout.toByteArray(), stderr.toByteArray());
@@ -140,64 +141,119 @@ public final class JschSshClient implements SshClient {
     
     /**
      * SSH client options (immutable).
+     * 
+     * Note: Session timeout is a hard timeout to limit the duration of the
+     * SSH session and it is enforced regardless of whether the session (or
+     * connection) is idle or not.
      */
     public static class Options {
         
-        /**
-         * Connect timeout in milliseconds. Defaults to 5 seconds. A value of 0 designates no timeout.
-         */
-        public final int connectTimeout;
+        private static final Map<String, Long> TIME_UNITS = timeUnits();
+        private static final Map<String, Long> BYTE_UNITS = byteUnits();
         
-        /**
-         * Session timeout in milliseconds. Defaults to 0, i.e. no timeout.
-         * 
-         * Note: This is a hard timeout to limit the duration of the SSH session
-         * and it is enforced regardless of whether the session is idle or not.
-         */
-        public final int sessionTimeout;
-        
-        /**
-         * Maximum stdout buffer size in bytes. Defaults to 1 MiB.
-         */
-        public final int maxStdoutBytes;
-        
-        /**
-         * Maximum stderr buffer size in bytes. Defaults to 1 MiB.
-         */
-        public final int maxStderrBytes;
-        
-        /**
-         * Map of SSH configuration options. See ssh_config(5).
-         */
-        public final Map<String, String> sshConfig;
+        final long connectTimeout;
+        final long sessionTimeout;
+        final long maxStdoutBytes;
+        final long maxStderrBytes;
+        final Map<String, String> sshConfig;
 
         /**
-         * Constructs default options.
+         * Constructs default options (5s, 0s, 1M, 1M, StrictHostKeyChecking=yes).
+         * 
+         * @see #JschSshClient(String, String, String, String, String)
          */
         public Options() {
-            this(5000, 0, 1024 * 1024, 1024 * 1024, Collections.singletonMap("StrictHostKeyChecking", "yes"));
+            this("5s", "0s", "1M", "1M", "StrictHostKeyChecking=yes");
         }
-        
+
         /**
          * Constructs new {@link Options} with the given parameters.
          * 
-         * @param connectTimeout Connect timeout (in ms) >= 0, 0 for no timeout
-         * @param sessionTimeout Session timeout (in ms) >= 0, 0 for no timeout
-         * @param maxStdoutBytes Maximum buffer size for stdout (in bytes) >= 0
-         * @param maxStderrBytes Maximum buffer size for stderr (in bytes) >= 0
-         * @param sshConfig SSH configuration options, may be <code>null</code>
+         * Timeouts are specified in ms/s/m/h/d, e.g. 5s for five seconds or 2h for two hours.
+         * 
+         * Buffer sizes are specified in B/KiB/MiB/GiB, e.g. 128B for 128 bytes or 20M for 20 MiB.
+         * 
+         * SSH configuration options are specified as colon-separated key=value pairs, e.g. "CompressionLevel=3;ServerAliveInterval=5".
+         * 
+         * @param connectTimeout Connect timeout, 0s for no timeout
+         * @param sessionTimeout Session timeout, 0s for no timeout
+         * @param maxStdoutSize Maximum buffer size for stdout < 2G
+         * @param maxStderrSize Maximum buffer size for stderr < 2G
+         * @param sshConfig SSH config options, may be <code>null</code>
          */
-        public Options(int connectTimeout, int sessionTimeout, int maxStdoutBytes, int maxStderrBytes, Map<String, String> sshConfig) {
-            Assert.isTrue(connectTimeout >= 0, "Connect timeout must be >= 0 ms");
+        public Options(String connectTimeout, String sessionTimeout, String maxStdoutSize, String maxStderrSize, String sshConfig) {
+            this(toMillis(connectTimeout), toMillis(sessionTimeout), toBytes(maxStdoutSize), toBytes(maxStderrSize), toMap(sshConfig));
+        }
+        
+        private Options(long connectTimeout, long sessionTimeout, long maxStdoutBytes, long maxStderrBytes, Map<String, String> sshConfig) {
+            Assert.isTrue(connectTimeout >= 0 && connectTimeout <= Integer.MAX_VALUE, "Connect timeout must be >= 0 and <= Integer.MAX_VALUE ms");
             Assert.isTrue(sessionTimeout >= 0, "Session timeout must be >= 0 ms");
-            Assert.isTrue(maxStdoutBytes >= 0, "Max stdout buffer size must be >= 0 bytes");
-            Assert.isTrue(maxStderrBytes >= 0, "Max stderr buffer size must be >= 0 bytes");
+            Assert.isTrue(maxStdoutBytes >= 0 && maxStdoutBytes <= Integer.MAX_VALUE, "Max stdout buffer size must be >= 0 and < 2G");
+            Assert.isTrue(maxStderrBytes >= 0 && maxStderrBytes <= Integer.MAX_VALUE, "Max stderr buffer size must be >= 0 and < 2G");
             this.connectTimeout = connectTimeout;
             this.sessionTimeout = sessionTimeout;
             this.maxStdoutBytes = maxStdoutBytes;
             this.maxStderrBytes = maxStderrBytes;
             this.sshConfig = sshConfig != null ? 
                     Collections.unmodifiableMap(sshConfig) : Collections.<String, String>emptyMap();
-        }  
+        }
+        
+        private static long toMillis(String timeout) {
+            Assert.hasText(timeout, "Timeout must not be null or empty");
+            for (Map.Entry<String, Long> entry : TIME_UNITS.entrySet()) {
+                String unit = entry.getKey();
+                long coefficient = entry.getValue();
+                if (timeout.endsWith(unit)) {
+                    return Long.parseLong(timeout.replace(unit, "")) * coefficient;
+                }
+            }
+            throw new IllegalArgumentException("Invalid timeout value: " + timeout + " (no unit specified)");
+        }
+        
+        private static long toBytes(String bufferSize) {
+            Assert.hasText(bufferSize, "Buffer size must not be null or empty");
+            for (Map.Entry<String, Long> entry : BYTE_UNITS.entrySet()) {
+                String unit = entry.getKey();
+                long coefficient = entry.getValue();
+                if (bufferSize.endsWith(unit)) {
+                    return Long.parseLong(bufferSize.replace(unit, "")) * coefficient;
+                }
+            }
+            throw new IllegalArgumentException("Invalid buffer size: " + bufferSize);
+        }
+        
+        private static Map<String, String> toMap(String sshConfig) {
+            Map<String, String> map = new LinkedHashMap<String, String>();
+            if (sshConfig != null && !sshConfig.trim().isEmpty()) {
+                String[] keyValuePairs = sshConfig.split(";");
+                for (String keyValuePair : keyValuePairs) {
+                    String[] keyAndValue = keyValuePair.trim().split("=");
+                    if (keyAndValue.length != 2) {
+                        throw new IllegalArgumentException("Invalid SSH configuration string: " + sshConfig);
+                    }
+                    map.put(keyAndValue[0].trim(), keyAndValue[1].trim());
+                }
+            }
+            return map;
+        }
+        
+        private static Map<String, Long> timeUnits() {
+            Map<String, Long> map = new LinkedHashMap<String, Long>(5);
+            map.put("ms", 1L);
+            map.put("s", 1L * 1000);
+            map.put("m", 1L * 1000 * 60);
+            map.put("h", 1L * 1000 * 60 * 60);
+            map.put("d", 1L * 1000 * 60 * 60 * 24);
+            return Collections.unmodifiableMap(map);
+        }
+        
+        private static Map<String, Long> byteUnits() {
+            Map<String, Long> map = new LinkedHashMap<String, Long>(4);
+            map.put("B", 1L);
+            map.put("K", 1L * 1024);
+            map.put("M", 1L * 1024 * 1024);
+            map.put("G", 1L * 1024 * 1024 * 1024);
+            return Collections.unmodifiableMap(map);
+        }
     }
 }
