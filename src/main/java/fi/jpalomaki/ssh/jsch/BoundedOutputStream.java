@@ -12,7 +12,7 @@ import fi.jpalomaki.ssh.util.Assert;
 final class BoundedOutputStream extends OutputStream {
 
     private final long maxBytes;
-    private long bytesWritten = 0;
+    private long bytesWritten = 0L;
     private final OutputStream sink;
     
     public BoundedOutputStream(long maxBytes, OutputStream sink) {
