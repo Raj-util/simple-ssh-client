@@ -1,9 +1,10 @@
 # Simple SSH client for Java
 
-This library is minimal by design, with minimal dependencies. Only public
-key authentication is supported. For more advanced SSH/SCP usage, I recommend
-[Ansible](https://github.com/ansible/ansible). You can use this Java library
-to invoke Ansible remotely, and have Ansible (playbooks) do the real work.
+This library is minimal by design, with minimal dependencies. Thread-safe. Only public
+key authentication is supported.
+
+For more advanced SSH/SCP usage, I recommend [Ansible](https://github.com/ansible/ansible). You
+can use this Java library to invoke Ansible remotely, and have Ansible (playbooks) do the real work.
 
 Utilizes the [Jsch](http://www.jcraft.com/jsch) SSH 2 library.
 
