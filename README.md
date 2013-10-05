@@ -46,8 +46,8 @@ Utilizes the [Jsch](http://www.jcraft.com/jsch) SSH 2 library.
     />
     
     <bean id="sshOptions" class="fi.jpalomaki.ssh.jsch.JschSshClient$Options"
-        c:connectTimeout="2s" c:sessionTimeout="5m" c:maxStdoutBytes="1M"
-        c:maxStderrBytes="1M" c:sshConfig="CompressionLevel=1;TCPKeepAlive=no" />
+        c:connectTimeout="3s" c:sessionTimeout="5m" c:maxStdoutSize="1M"
+        c:maxStderrSize="1M" c:sshConfig="CompressionLevel=1;TCPKeepAlive=no" />
         
     <context:property-placeholder location="classpath:META-INF/spring/props/ssh-client.properties" />
     
