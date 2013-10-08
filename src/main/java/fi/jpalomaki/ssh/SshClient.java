@@ -25,7 +25,7 @@ public interface SshClient {
      * <p>Executes the given command as the given user on the given host,
      * passing data to ssh's standard input from the given byte buffer.</p>
      * 
-     * <p>Roughly equivalent to: <code>cat &lt;stdin&gt; | ssh -p &lt;port&gt; &lt;user&gt;@&lt;host&gt; &lt;command&gt;</code>.</p> 
+     * <p>Roughly equivalent to: <code>echo &lt;stdin&gt; | ssh -p &lt;port&gt; &lt;user&gt;@&lt;host&gt; &lt;command&gt;</code>.</p> 
      * 
      * @param command Command to execute, not <code>null</code> or empty
      * @param stdin Bytes to pass to ssh's standard input, not <code>null</code>

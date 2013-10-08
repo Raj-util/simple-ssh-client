@@ -83,7 +83,7 @@ public final class Result {
         int stderrSizeInBytes = stderr.array().length;
         String hashCode = Integer.toHexString(hashCode());
         String instance = getClass().getSimpleName() + "@" + hashCode; 
-        return String.format("%s [exitCode=%s, stdoutSizeInBytes=%s, stderrSizeInBytes=%s]", 
+        return String.format("%s [exitCode=%s,stdoutSizeInBytes=%s,stderrSizeInBytes=%s]", 
                 instance, exitCode, stdoutSizeInBytes, stderrSizeInBytes);
     }
 }

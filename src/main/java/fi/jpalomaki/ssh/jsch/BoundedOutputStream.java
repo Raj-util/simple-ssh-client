@@ -25,7 +25,7 @@ final class BoundedOutputStream extends OutputStream {
     @Override
     public void write(int b) throws IOException {
         if (bytesWritten++ > maxBytes) {
-            throw new IOException("Exceeded max bytes written: " + maxBytes);
+            throw new IOException("Exceeded max bytes: " + maxBytes);
         }
         sink.write(b);
     }

@@ -75,7 +75,7 @@ public final class JschSshClient implements SshClient {
     @Override
     public Result executeCommand(String command, ByteBuffer stdin, UserAtHost userAtHost) throws SshClientException {
         Assert.hasText(command, "Command must not be null or empty");
-        Assert.notNull(stdin, "Standard in must not be null (but may be empty)");
+        Assert.notNull(stdin, "Stdin must not be null (but may be empty)");
         Assert.notNull(userAtHost, "User at host must not be null");
         Session session = null;
         try {
@@ -140,7 +140,7 @@ public final class JschSshClient implements SshClient {
     }
     
     /**
-     * SSH client options (immutable).
+     * Container for SSH client options (immutable).
      * 
      * Note: Session timeout is a hard timeout to limit the duration of the
      * SSH session and it is enforced regardless of whether the session (or
@@ -207,7 +207,7 @@ public final class JschSshClient implements SshClient {
                     return Long.parseLong(timeout.replace(unit, "")) * coefficient;
                 }
             }
-            throw new IllegalArgumentException("Invalid timeout value: " + timeout + " (no unit specified)");
+            throw new IllegalArgumentException("Invalid timeout value: " + timeout + " (no unit specified?)");
         }
         
         private static long toBytes(String bufferSize) {

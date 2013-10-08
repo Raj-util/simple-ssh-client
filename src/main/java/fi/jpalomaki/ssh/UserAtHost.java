@@ -5,7 +5,7 @@ import fi.jpalomaki.ssh.util.Assert;
 /**
  * Abstraction for a remote user, host and port. Immutable.
  * 
- * Think <code>ssh -p &lt;port&gt; &lt;user&gt;@&lt;host&gt;</code>.
+ * Think <code>-p &lt;port&gt; &lt;user&gt;@&lt;host&gt;</code>.
  * 
  * @author jpalomaki
  */
@@ -45,6 +45,6 @@ public final class UserAtHost {
     public String toString() {
         String hashCode = Integer.toHexString(hashCode());
         String instance = getClass().getSimpleName() + "@" + hashCode;
-        return String.format("%s [user=%s, host=%s, port=%s]", instance, user, host, port);
+        return String.format("%s [user=%s,host=%s,port=%s]", instance, user, host, port);
     }
 }
