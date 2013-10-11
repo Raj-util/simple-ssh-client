@@ -12,11 +12,20 @@ Utilizes the [Jsch](http://www.jcraft.com/jsch) SSH 2 library.
 
 Java snapshot binaries available in the [Sonatype OSS repository](https://oss.sonatype.org/content/groups/public).
 
-    <dependency>
-        <groupId>fi.jpalomaki.ssh</groupId>
-        <artifactId>simple-ssh-client</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </dependency>
+    <repositories>
+        <repository>
+            <id>sonatype-oss</id>
+            <url>https://oss.sonatype.org/content/groups/public</url>
+        </repository>
+    </repositories>
+    ...
+    <dependencies>
+        <dependency>
+            <groupId>fi.jpalomaki.ssh</groupId>
+            <artifactId>simple-ssh-client</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 ## Simple usage
 
