@@ -160,7 +160,7 @@ public final class JschSshClient implements SshClient {
         /**
          * Constructs default options (5s, 0s, 1M, 1M, StrictHostKeyChecking=yes).
          * 
-         * @see #JschSshClient(String, String, String, String, String)
+         * @see #JschSshClient.Options(String, String, String, String, String)
          */
         public Options() {
             this("5s", "0s", "1M", "1M", "StrictHostKeyChecking=yes");
