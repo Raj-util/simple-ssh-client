@@ -1,7 +1,12 @@
 # Simple SSH client for Java
 
-This library is minimal by design, with minimal dependencies. Thread-safe. Only public
-key authentication is supported.
+This library is minimal by design, with minimal dependencies. Client features:
+
+ * Thread-safe (reusable)
+ * Configurable (e.g. session timeout)
+ * Only public key authentication is supported
+ * Pseudo-terminal (pty) allocation (for sudo)
+ * Stdin may be passed in to commands
 
 For more advanced SSH usage, I recommend [Ansible](https://github.com/ansible/ansible). You can
 use this Java library to invoke Ansible remotely, and have Ansible (playbooks) do the real work.
