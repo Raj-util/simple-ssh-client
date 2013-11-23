@@ -46,7 +46,7 @@ Java snapshot binaries available in the [Sonatype OSS repository](https://oss.so
 ## Usage with empty passphrase, a custom known hosts file and SSH client options
 
     // Think ssh -o "StrictHostKeyChecking=no UserKnownHostsFile=/dev/null" root@example.com sleep 5s
-    Options options = new Options("2s", "30m", "64K", "64K", "StrictHostKeyChecking=no");
+    Options options = new Options("2s", "30m", "64K", "64K", "StrictHostKeyChecking=no", false);
     UserAtHost userAtHost = new UserAtHost("root", "example.com");
     SshClient sshClient = new JschSshClient("~/.ssh/id_rsa", null, "/dev/null", options);
     sshClient.executeCommand("sleep 5s", userAtHost);
@@ -62,7 +62,8 @@ Java snapshot binaries available in the [Sonatype OSS repository](https://oss.so
     
     <bean id="sshOptions" class="fi.jpalomaki.ssh.jsch.JschSshClient$Options"
         c:connectTimeout="3s" c:sessionTimeout="5m" c:maxStdoutSize="1M"
-        c:maxStderrSize="1M" c:sshConfig="CompressionLevel=1;TCPKeepAlive=no" />
+        c:maxStderrSize="1M" c:sshConfig="CompressionLevel=1;TCPKeepAlive=no"
+        c:allocatePty="true" />
         
     <context:property-placeholder location="classpath:META-INF/spring/props/ssh-client.properties" />
     

@@ -16,7 +16,7 @@ import fi.jpalomaki.ssh.jsch.JschSshClient.Options;
 
 /**
  * Tests for {@link JschSshClient}. Tests assume user "test" is available on the local host,
- * and has added the public keys under src/test/resources in his/her ~/.ssh/authorized_keys.
+ * and that appropriate SSH public keys have been appended to /home/test/.ssh/authorized_keys.
  */
 public final class JschSshClientTest {
     
@@ -165,7 +165,7 @@ public final class JschSshClientTest {
     }
     
     @Test
-    public void testSudoSucceedsWithPty() {
+    public void testSudoWithPty() {
         ByteBuffer sudoPassword = ByteBuffer.wrap("temp1234\n".getBytes());
         Options options = new Options("0s", "5s", "1K", "1K", "StrictHostKeyChecking=no", true);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
