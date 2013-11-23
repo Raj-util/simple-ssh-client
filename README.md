@@ -3,14 +3,29 @@
 This library is minimal by design, with minimal dependencies. Thread-safe. Only public
 key authentication is supported.
 
-For more advanced SSH/SCP usage, I recommend [Ansible](https://github.com/ansible/ansible). You
-can use this Java library to invoke Ansible remotely, and have Ansible (playbooks) do the real work.
+For more advanced SSH usage, I recommend [Ansible](https://github.com/ansible/ansible). You can
+use this Java library to invoke Ansible remotely, and have Ansible (playbooks) do the real work.
 
 Utilizes the [Jsch](http://www.jcraft.com/jsch) SSH 2 library.
 
 ## Maven dependency
 
-    TODO: Publish to Sonatype's OSS repo and add pom.xml entry here
+Java snapshot binaries available in the [Sonatype OSS repository](https://oss.sonatype.org/content/groups/public).
+
+    <repositories>
+        <repository>
+            <id>sonatype-oss</id>
+            <url>https://oss.sonatype.org/content/groups/public</url>
+        </repository>
+    </repositories>
+    ...
+    <dependencies>
+        <dependency>
+            <groupId>fi.jpalomaki.ssh</groupId>
+            <artifactId>simple-ssh-client</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 ## Simple usage
 
