@@ -60,7 +60,7 @@ public final class JschSshClientTest {
     
     @Test
     public void testAutoCreatedKnownHostsFile() throws IOException {
-        Options options = new Options("0s", "0s", "64B", "64B", "StrictHostKeyChecking=no");
+        Options options = new Options("0s", "0s", "64B", "64B", "StrictHostKeyChecking=no", false);
         File knownHosts = File.createTempFile("testAutoCreatedKnownHostsFile", "known_hosts", new File("/tmp"));
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test_nopass", null, knownHosts.getAbsolutePath(), options);
         Result result = sshClient.executeCommand("sleep 1s; whoami", userAtHost);
@@ -99,7 +99,7 @@ public final class JschSshClientTest {
     
     @Test
     public void testKnownHostsAtDevNullNoStrictHostKeyChecking() {
-        Options options = new Options("0s", "0s", "64B", "64B", "StrictHostKeyChecking=no");
+        Options options = new Options("0s", "0s", "64B", "64B", "StrictHostKeyChecking=no", false);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test_nopass", null, "/dev/null", options);
         Result result = sshClient.executeCommand("whoami", userAtHost);
         assertEquals(0, result.exitCode);
@@ -117,7 +117,7 @@ public final class JschSshClientTest {
     
     @Test(expected = SshClientException.class, timeout = 5000)
     public void testConnectTimeout() {
-        Options options = new Options("4500ms", "0s", "64B", "64B", "StrictHostKeyChecking=no");
+        Options options = new Options("4500ms", "0s", "64B", "64B", "StrictHostKeyChecking=no", false);
         UserAtHost atUnreachableHost = new UserAtHost("test", "1.2.3.4");
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
         sshClient.executeCommand("whoami", atUnreachableHost);
@@ -125,14 +125,14 @@ public final class JschSshClientTest {
     
     @Test(expected = SshClientException.class, timeout = 3000)
     public void testSessionTimeout() {
-        Options options = new Options("0s", "2500ms", "64B", "64B", "StrictHostKeyChecking=no");
+        Options options = new Options("0s", "2500ms", "64B", "64B", "StrictHostKeyChecking=no", false);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
         sshClient.executeCommand("sleep 3s", userAtHost);
     }
     
     @Test
     public void testStdoutOverflow() {
-        Options options = new Options("0s", "0s", "2B", "1M", "StrictHostKeyChecking=no");
+        Options options = new Options("0s", "0s", "2B", "1M", "StrictHostKeyChecking=no", false);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
         Result result = sshClient.executeCommand("echo mygodthisisalongstringindeed", userAtHost);
         System.out.println(result.stdoutAsText());
@@ -151,9 +151,27 @@ public final class JschSshClientTest {
     public void testNonStandardPort() {
         ByteBuffer stdin = ByteBuffer.wrap("secret".getBytes());
         UserAtHost userAtHost = new UserAtHost("test", "localhost", 2020);
-        Options options = new Options("0s", "0s", "64K", "64K", "StrictHostKeyChecking=no");
+        Options options = new Options("0s", "0s", "64K", "64K", "StrictHostKeyChecking=no", false);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
         Result result = sshClient.executeCommand("cat - > secret.txt; cat secret.txt", stdin, userAtHost);
         assertEquals("secret", result.stdoutAsText());
+    }
+    
+    @Test
+    public void testSudoFailsWithoutPty() {
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka");
+        Result result = sshClient.executeCommand("sudo ls /root", userAtHost);
+        assertTrue(result.exitCode != 0);
+    }
+    
+    @Test
+    public void testSudoSucceedsWithPty() {
+        ByteBuffer sudoPassword = ByteBuffer.wrap("temp1234\n".getBytes());
+        Options options = new Options("0s", "5s", "1K", "1K", "StrictHostKeyChecking=no", true);
+        SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
+        Result result = sshClient.executeCommand("sudo -S ls -la /root", sudoPassword, userAtHost);
+        assertEquals(0, result.exitCode);
+        assertTrue(!result.stdoutAsText().isEmpty());
+        System.out.println(result.stdoutAsText());
     }
 }

@@ -13,67 +13,67 @@ public final class OptionsTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void testNullConnectTimeout() {
-        new Options(null, "0s", "1K", "1K", null);
+        new Options(null, "0s", "1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedConnectTimeout() {
-        new Options("-5", "0s", "1K", "1K", null);
+        new Options("-5", "0s", "1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedConnectTimeout2() {
-        new Options("ad", "0s", "1K", "1K", null);
+        new Options("ad", "0s", "1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedSessionTimeout() {
-        new Options("ad", "a", "1K", "1K", null);
+        new Options("ad", "a", "1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeConnectTimeout() {
-        new Options("-5s", "0s", "1K", "1K", null);
+        new Options("-5s", "0s", "1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testTooLongConnectTimeout() {
-        new Options("25d", "0s", "1K", "1K", null);
+        new Options("25d", "0s", "1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testNullMaxStdoutBytes() {
-        new Options("0s", "0s", null, "1K", null);
+        new Options("0s", "0s", null, "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedMaxStdoutBytes() {
-        new Options("0s", "0s", "K", "1K", null);
+        new Options("0s", "0s", "K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedMaxStdoutBytes2() {
-        new Options("0s", "0s", "1 K", "1K", null);
+        new Options("0s", "0s", "1 K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeMaxStdoutBytes() {
-        new Options("0s", "0s", "-1K", "1K", null);
+        new Options("0s", "0s", "-1K", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMaxStdoutBytesOverMaxValue() {
-        new Options("0s", "0s", "3G", "1K", null);
+        new Options("0s", "0s", "3G", "1K", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMaxStderrBytesOverMaxValue() {
-        new Options("1s", "5s", "1G", "2147483648B", null);
+        new Options("1s", "5s", "1G", "2147483648B", null, false);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void testMalformedSshConfigString() {
-        new Options("1s", "5s", "1G", "1G", "a;b");
+        new Options("1s", "5s", "1G", "1G", "a;b", false);
     }
     
     @Test
@@ -84,11 +84,12 @@ public final class OptionsTest {
         assertEquals(1024L * 1024, defaults.maxStdoutBytes);
         assertEquals(1024L * 1024, defaults.maxStderrBytes);
         assertEquals(Collections.singletonMap("StrictHostKeyChecking", "yes"), defaults.sshConfig);
+        assertEquals(false, defaults.allocatePty);
     }
     
     @Test
     public void testCustomSshConfig() {
-        Options options = new Options("5m", "1d", "128B", "1K", "CompressionLevel=1;TCPKeepAlive=no");
+        Options options = new Options("5m", "1d", "128B", "1K", "CompressionLevel=1;TCPKeepAlive=no", true);
         assertEquals(1000L * 60 * 5, options.connectTimeout);
         assertEquals(1000L * 60 * 60 * 24, options.sessionTimeout);
         assertEquals(128L, options.maxStdoutBytes);
@@ -97,5 +98,6 @@ public final class OptionsTest {
         expected.put("CompressionLevel", "1");
         expected.put("TCPKeepAlive", "no");
         assertEquals(expected, options.sshConfig);
+        assertEquals(true, options.allocatePty);
     }
 }

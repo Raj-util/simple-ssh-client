@@ -114,6 +114,7 @@ public final class JschSshClient implements SshClient {
         }
         executionChannel.setOutputStream(new BoundedOutputStream(options.maxStdoutBytes, stdout));
         executionChannel.setErrStream(new BoundedOutputStream(options.maxStderrBytes, stderr));
+        executionChannel.setPty(options.allocatePty);
         executionChannel.connect();
         waitUntilChannelClosed(executionChannel);
         return new Result(executionChannel.getExitStatus(), stdout.toByteArray(), stderr.toByteArray());
@@ -156,14 +157,13 @@ public final class JschSshClient implements SshClient {
         final long maxStdoutBytes;
         final long maxStderrBytes;
         final Map<String, String> sshConfig;
+        final boolean allocatePty;
 
         /**
-         * Constructs default options (5s, 0s, 1M, 1M, StrictHostKeyChecking=yes).
-         * 
-         * @see #JschSshClient.Options(String, String, String, String, String)
+         * Constructs default options (5s, 0s, 1M, 1M, StrictHostKeyChecking=yes, false).
          */
         public Options() {
-            this("5s", "0s", "1M", "1M", "StrictHostKeyChecking=yes");
+            this("5s", "0s", "1M", "1M", "StrictHostKeyChecking=yes", false);
         }
 
         /**
@@ -180,12 +180,13 @@ public final class JschSshClient implements SshClient {
          * @param maxStdoutSize Maximum buffer size for stdout < 2G
          * @param maxStderrSize Maximum buffer size for stderr < 2G
          * @param sshConfig SSH config options, may be <code>null</code>
+         * @param allocatePty True to allocate a pseudo-terminal, false otherwise
          */
-        public Options(String connectTimeout, String sessionTimeout, String maxStdoutSize, String maxStderrSize, String sshConfig) {
-            this(toMillis(connectTimeout), toMillis(sessionTimeout), toBytes(maxStdoutSize), toBytes(maxStderrSize), toMap(sshConfig));
+        public Options(String connectTimeout, String sessionTimeout, String maxStdoutSize, String maxStderrSize, String sshConfig, boolean allocatePty) {
+            this(toMillis(connectTimeout), toMillis(sessionTimeout), toBytes(maxStdoutSize), toBytes(maxStderrSize), toMap(sshConfig), allocatePty);
         }
         
-        private Options(long connectTimeout, long sessionTimeout, long maxStdoutBytes, long maxStderrBytes, Map<String, String> sshConfig) {
+        private Options(long connectTimeout, long sessionTimeout, long maxStdoutBytes, long maxStderrBytes, Map<String, String> sshConfig, boolean allocatePty) {
             Assert.isTrue(connectTimeout >= 0 && connectTimeout <= Integer.MAX_VALUE, "Connect timeout must be >= 0 and <= Integer.MAX_VALUE ms");
             Assert.isTrue(sessionTimeout >= 0, "Session timeout must be >= 0 ms");
             Assert.isTrue(maxStdoutBytes >= 0 && maxStdoutBytes <= Integer.MAX_VALUE, "Max stdout buffer size must be >= 0 and < 2G");
@@ -196,6 +197,7 @@ public final class JschSshClient implements SshClient {
             this.maxStderrBytes = maxStderrBytes;
             this.sshConfig = sshConfig != null ? 
                     Collections.unmodifiableMap(sshConfig) : Collections.<String, String>emptyMap();
+            this.allocatePty = allocatePty;
         }
         
         private static long toMillis(String timeout) {
