@@ -2,6 +2,7 @@
 
 This library is minimal by design, with minimal dependencies. Client features:
 
+ * Command execution
  * Thread-safe (reusable)
  * Configurable (e.g. session timeout)
  * Only public key authentication is supported
