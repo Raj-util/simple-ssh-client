@@ -4,3 +4,5 @@ target
 .project
 src/main/resources
 src/test/resources/id_rsa*
+.idea
+simple-ssh-client.iml
