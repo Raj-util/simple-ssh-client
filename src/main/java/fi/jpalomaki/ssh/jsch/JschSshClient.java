@@ -10,11 +10,10 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import fi.jpalomaki.ssh.SshClient;
-import fi.jpalomaki.ssh.SshClientException;
-import fi.jpalomaki.ssh.UserAtHost;
-import fi.jpalomaki.ssh.Result;
+import fi.jpalomaki.ssh.*;
 import fi.jpalomaki.ssh.util.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Jsch-based {@link SshClient} implementation.
@@ -26,7 +25,8 @@ import fi.jpalomaki.ssh.util.Assert;
 public final class JschSshClient implements SshClient {
     
     private static final long CHANNEL_CLOSED_POLL_INTERVAL = 100L;
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(JschSshClient.class);
+
     private final String privateKey;
     private final byte[] passphrase;
     private final String knownHosts;
@@ -77,6 +77,8 @@ public final class JschSshClient implements SshClient {
         Assert.hasText(command, "Command must not be null or empty");
         Assert.notNull(stdin, "Stdin must not be null (but may be empty)");
         Assert.notNull(userAtHost, "User at host must not be null");
+        LOGGER.debug("Executing command '" + command + "' on " + userAtHost +
+                " (stdin = " + (stdin != null ? stdin.array().length : 0) + " bytes)");
         Session session = null;
         try {
             session = newSessionFor(userAtHost);
@@ -136,7 +138,7 @@ public final class JschSshClient implements SshClient {
         } while (!executionChannel.isClosed());
         if (!executionChannel.isClosed()) {
             executionChannel.disconnect();
-            throw new SshClientException("Session timeout (" + sessionTimeout + " ms) exceeded");
+            throw new SessionTimeoutException(sessionTimeout);
         }
     }
     

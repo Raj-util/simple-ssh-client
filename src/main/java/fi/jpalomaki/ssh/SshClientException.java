@@ -5,7 +5,7 @@ package fi.jpalomaki.ssh;
  * 
  * @author jpalomaki
  */
-public final class SshClientException extends RuntimeException {
+public class SshClientException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
     

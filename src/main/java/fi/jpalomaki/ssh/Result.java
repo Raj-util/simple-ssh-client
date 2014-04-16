@@ -37,7 +37,19 @@ public final class Result {
         this.stdout = ByteBuffer.wrap(stdout);
         this.stderr = ByteBuffer.wrap(stderr);
     }
-    
+
+    /**
+     * Constructs a new {@link Result}, converting the given stdout
+     * and stderr strings into bytes using platform-default charset.
+     *
+     * @param exitCode Integer exit (return) code
+     * @param stdout Standard output, not <code>null</code>
+     * @param stderr Standard error, not <code>null</code>
+     */
+    public Result(int exitCode, String stdout, String stderr) {
+        this(exitCode, stdout.getBytes(), stderr.getBytes());
+    }
+
     /**
      * Returns stdout as text, using default charset (UTF-8). Never <code>null</code>.
      */
