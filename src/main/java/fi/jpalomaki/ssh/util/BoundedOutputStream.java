@@ -1,15 +1,14 @@
-package fi.jpalomaki.ssh.jsch;
+package fi.jpalomaki.ssh.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import fi.jpalomaki.ssh.util.Assert;
 
 /**
  * An {@link OutputStream} that limits the number of bytes written to it.
  *  
  * @author jpalomaki
  */
-final class BoundedOutputStream extends OutputStream {
+public final class BoundedOutputStream extends OutputStream {
 
     private final long maxBytes;
     private long bytesWritten = 0L;

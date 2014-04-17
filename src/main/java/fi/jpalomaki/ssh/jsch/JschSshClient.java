@@ -12,6 +12,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import fi.jpalomaki.ssh.*;
 import fi.jpalomaki.ssh.util.Assert;
+import fi.jpalomaki.ssh.util.BoundedOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,17 +62,11 @@ public final class JschSshClient implements SshClient {
         this.options = options;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Result executeCommand(String command, UserAtHost userAtHost) throws SshClientException {
         return executeCommand(command, ByteBuffer.wrap(new byte[0]), userAtHost);
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public Result executeCommand(String command, ByteBuffer stdin, UserAtHost userAtHost) throws SshClientException {
         Assert.hasText(command, "Command must not be null or empty");

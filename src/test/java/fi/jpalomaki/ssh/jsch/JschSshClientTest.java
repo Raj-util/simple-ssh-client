@@ -1,5 +1,6 @@
 package fi.jpalomaki.ssh.jsch;
 
+import fi.jpalomaki.ssh.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -8,10 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static org.junit.Assert.*;
-import fi.jpalomaki.ssh.Result;
-import fi.jpalomaki.ssh.SshClient;
-import fi.jpalomaki.ssh.SshClientException;
-import fi.jpalomaki.ssh.UserAtHost;
+
 import fi.jpalomaki.ssh.jsch.JschSshClient.Options;
 
 /**
@@ -123,11 +121,11 @@ public final class JschSshClientTest {
         sshClient.executeCommand("whoami", atUnreachableHost);
     }
     
-    @Test(expected = SshClientException.class, timeout = 3000)
+    @Test(expected = SessionTimeoutException.class, timeout = 3000)
     public void testSessionTimeout() {
         Options options = new Options("0s", "2500ms", "64B", "64B", "StrictHostKeyChecking=no", false);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
-        sshClient.executeCommand("sleep 3s", userAtHost);
+        sshClient.executeCommand("sleep 5s", userAtHost);
     }
     
     @Test

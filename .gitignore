@@ -1,7 +1,4 @@
 target
-.settings
-.classpath
-.project
 src/main/resources
 src/test/resources/id_rsa*
 .idea

@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 
 /**
- * Mocked SshClient for testing purposes.
+ * Mocked {@link SshClient} for testing purposes.
  *
  * @author jpalomaki
  */
@@ -33,11 +33,11 @@ public final class MockSshClient implements SshClient {
 
     @Override
     public Result executeCommand(String command, ByteBuffer stdin, UserAtHost userAtHost) throws SshClientException {
-        if (configuration.reportConnectionFailure) {
-            throw new SshClientException("Connection failure", new SocketException("Failed to establish bogus socket"));
-        }
         LOGGER.debug("Executing command '" + command + "' on " + userAtHost +
                 " (stdin = " + (stdin != null ? stdin.array().length : 0) + " bytes)");
+        if (configuration.reportConnectionFailure) {
+            throw new SshClientException("Fake connection failure", new SocketException("Failed to establish bogus socket"));
+        }
         sleepFor(configuration.commandDurationSeconds);
         return new Result(configuration.exitCode, configuration.stdout, configuration.stderr);
     }
@@ -46,6 +46,7 @@ public final class MockSshClient implements SshClient {
         try {
             Thread.sleep(seconds * 1000L);
         } catch (InterruptedException e) {
+            // Ignore
         }
     }
 
@@ -57,23 +58,43 @@ public final class MockSshClient implements SshClient {
         private int commandDurationSeconds = 5;
         private boolean reportConnectionFailure = false;
 
+        public int getExitCode() {
+            return exitCode;
+        }
+
         public void setExitCode(int exitCode) {
             this.exitCode = exitCode;
         }
 
+        public String getStdout() {
+            return stdout;
+        }
+
         public void setStdout(String stdout) {
-            Assert.notNull(stdout, "Stdout must not be null");
+            Assert.notNull(stdout, "Stdout must not be null (but may be empty)");
             this.stdout = stdout;
         }
 
+        public String getStderr() {
+            return stderr;
+        }
+
         public void setStderr(String stderr) {
-            Assert.notNull(stderr, "Stderr must not be null");
+            Assert.notNull(stderr, "Stderr must not be null (but may be empty)");
             this.stderr = stderr;
         }
 
+        public int getCommandDurationSeconds() {
+            return commandDurationSeconds;
+        }
+
         public void setCommandDurationSeconds(int commandDurationSeconds) {
-            Assert.isTrue(commandDurationSeconds > 0, "Command duration must be > 0");
+            Assert.isTrue(commandDurationSeconds > 0, "Command duration must be > 0 seconds");
             this.commandDurationSeconds = commandDurationSeconds;
+        }
+
+        public boolean isReportConnectionFailure() {
+            return reportConnectionFailure;
         }
 
         public void setReportConnectionFailure(boolean reportConnectionFailure) {

@@ -1,6 +1,6 @@
 # Simple SSH client for Java
 
-This library is minimal by design, with minimal dependencies. Client features:
+This library is minimal by design, with minimal dependencies. Features:
 
  * Command execution
  * Thread-safe (reusable)
@@ -78,3 +78,19 @@ Java snapshot binaries available in the [Sonatype OSS repository](https://oss.so
     ssh.knownHosts = /path/to/.ssh/known_hosts
     ssh.privateKey = /path/to/.ssh/id_rsa
     ssh.passphrase = secret
+
+## Mock SSH client Spring configuration, configurable at runtime through JMX (using e.g. jconsole)
+
+    // E.g. META-INF/spring/config.xml:
+
+    <bean id="mockSshClient" class="fi.jpalomaki.ssh.mock.MockSshClient" p:configuration-ref="mockSshClientConfiguration" />
+
+    <bean id="mockSshClientConfiguration" class="fi.jpalomaki.ssh.mock.MockSshClient.Configuration" p:commandDurationSeconds="5" />
+
+    <bean class="org.springframework.jmx.export.MBeanExporter">
+        <property name="beans">
+            <map>
+                <entry key="ssh:name=mockSshClientConfiguration" value-ref="mockSshClientConfiguration" />
+             </map>
+         </property>
+    </bean>

@@ -37,10 +37,7 @@ public final class UserAtHost {
         this.host = host;
         this.port = port;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public String toString() {
         String hashCode = Integer.toHexString(hashCode());

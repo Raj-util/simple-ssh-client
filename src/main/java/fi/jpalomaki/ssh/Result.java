@@ -85,10 +85,7 @@ public final class Result {
             throw new UncheckedUnsupportedEncodingException(e);
         }
     }
-    
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public String toString() {
         int stdoutSizeInBytes = stdout.array().length;

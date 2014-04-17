@@ -40,7 +40,7 @@
     </developers>
 
     <properties>
-        <compiler.level>1.6</compiler.level>
+        <compiler.level>1.7</compiler.level>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
