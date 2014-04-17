@@ -42,6 +42,6 @@ public final class UserAtHost {
     public String toString() {
         String hashCode = Integer.toHexString(hashCode());
         String instance = getClass().getSimpleName() + "@" + hashCode;
-        return String.format("%s [user=%s,host=%s,port=%s]", instance, user, host, port);
+        return String.format("%s [user=%s, host=%s, port=%s]", instance, user, host, port);
     }
 }

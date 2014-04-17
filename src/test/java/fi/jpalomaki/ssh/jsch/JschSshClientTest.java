@@ -145,7 +145,6 @@ public final class JschSshClientTest {
     }
     
     @Test
-    @Ignore
     public void testNonStandardPort() {
         ByteBuffer stdin = ByteBuffer.wrap("secret".getBytes());
         UserAtHost userAtHost = new UserAtHost("test", "localhost", 2020);
@@ -164,7 +163,7 @@ public final class JschSshClientTest {
     
     @Test
     public void testSudoWithPty() {
-        ByteBuffer sudoPassword = ByteBuffer.wrap("temp1234\n".getBytes());
+        ByteBuffer sudoPassword = ByteBuffer.wrap("lampola1\n".getBytes());
         Options options = new Options("0s", "5s", "1K", "1K", "StrictHostKeyChecking=no", true);
         SshClient sshClient = new JschSshClient("src/test/resources/id_rsa_test", "ankka", "/dev/null", options);
         Result result = sshClient.executeCommand("sudo -S ls -la /root", sudoPassword, userAtHost);
