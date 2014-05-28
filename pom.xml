@@ -11,7 +11,7 @@
 
     <groupId>fi.jpalomaki.ssh</groupId>
     <artifactId>simple-ssh-client</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>simple-ssh-client</name>
