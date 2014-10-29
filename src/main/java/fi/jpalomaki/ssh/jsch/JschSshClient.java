@@ -3,28 +3,23 @@ package fi.jpalomaki.ssh.jsch;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
+import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.jcraft.jsch.*;
 import fi.jpalomaki.ssh.*;
 import fi.jpalomaki.ssh.util.Assert;
 import fi.jpalomaki.ssh.util.BoundedOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Jsch-based {@link SshClient} implementation.
- * 
+ *
  * Only public key authentication is supported.
- * 
+ *
  * @author jpalomaki
  */
 public final class JschSshClient implements SshClient {
-    
+
     private static final long CHANNEL_CLOSED_POLL_INTERVAL = 100L;
     private static final Logger LOGGER = LoggerFactory.getLogger(JschSshClient.class);
 
@@ -32,21 +27,21 @@ public final class JschSshClient implements SshClient {
     private final byte[] passphrase;
     private final String knownHosts;
     private final Options options;
-    
+
     /**
      * Constructs a new {@link JschSshClient} with a default known hosts
      * file (<code>~/.ssh/known_hosts</code>) and default {@link Options}.
-     * 
+     *
      * Note that strict host key checking is used by default, which means
      * that a valid host key must be present in the SSH known hosts file.
      */
     public JschSshClient(String privateKey, String passphrase) {
         this(privateKey, passphrase, "~/.ssh/known_hosts", new Options());
     }
-    
+
     /**
      * Constructs a new {@link JschSshClient} with the given parameters.
-     * 
+     *
      * @param privateKey Path to private key file, not <code>null</code> or empty
      * @param passphrase Private key passphrase, may be <code>null</code> for empty passphrase
      * @param knownHosts Path to known hosts file, not <code>null</code> or empty
@@ -99,7 +94,7 @@ public final class JschSshClient implements SshClient {
         session.connect((int)options.connectTimeout);
         return session;
     }
-    
+
     private Result doExecuteCommand(String command, byte[] bytesToStdin, Session session) throws JSchException, SshClientException {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
@@ -109,14 +104,14 @@ public final class JschSshClient implements SshClient {
         if (stdin.available() > 0) {
             executionChannel.setInputStream(stdin);
         }
-        executionChannel.setOutputStream(new BoundedOutputStream(options.maxStdoutBytes, stdout));
-        executionChannel.setErrStream(new BoundedOutputStream(options.maxStderrBytes, stderr));
+        executionChannel.setOutputStream(new BoundedOutputStream(options.maxStdoutBytes, stdout, false));
+        executionChannel.setErrStream(new BoundedOutputStream(options.maxStderrBytes, stderr, false));
         executionChannel.setPty(options.allocatePty);
         executionChannel.connect();
         waitUntilChannelClosed(executionChannel);
         return new Result(executionChannel.getExitStatus(), stdout.toByteArray(), stderr.toByteArray());
     }
-    
+
     private void waitUntilChannelClosed(ChannelExec executionChannel) {
         long waitTimeThusFar = 0L;
         long sessionTimeout = options.sessionTimeout;
@@ -136,19 +131,19 @@ public final class JschSshClient implements SshClient {
             throw new SessionTimeoutException(sessionTimeout);
         }
     }
-    
+
     /**
      * Container for SSH client options (immutable).
-     * 
+     *
      * Note: Session timeout is a hard timeout to limit the duration of the
      * SSH session and it is enforced regardless of whether the session (or
      * connection) is idle or not.
      */
     public static class Options {
-        
+
         private static final Map<String, Long> TIME_UNITS = timeUnits();
         private static final Map<String, Long> BYTE_UNITS = byteUnits();
-        
+
         final long connectTimeout;
         final long sessionTimeout;
         final long maxStdoutBytes;
@@ -165,13 +160,13 @@ public final class JschSshClient implements SshClient {
 
         /**
          * Constructs new {@link Options} with the given parameters.
-         * 
+         *
          * Timeouts are specified in ms/s/m/h/d, e.g. 5s for five seconds or 2h for two hours.
-         * 
+         *
          * Buffer sizes are specified in B/KiB/MiB/GiB, e.g. 128B for 128 bytes or 20M for 20 MiB.
-         * 
+         *
          * SSH configuration options are specified as colon-separated key=value pairs, e.g. "CompressionLevel=3;ServerAliveInterval=5".
-         * 
+         *
          * @param connectTimeout Connect timeout, 0s for no timeout
          * @param sessionTimeout Session timeout, 0s for no timeout
          * @param maxStdoutSize Maximum buffer size for stdout < 2G
@@ -182,7 +177,7 @@ public final class JschSshClient implements SshClient {
         public Options(String connectTimeout, String sessionTimeout, String maxStdoutSize, String maxStderrSize, String sshConfig, boolean allocatePty) {
             this(toMillis(connectTimeout), toMillis(sessionTimeout), toBytes(maxStdoutSize), toBytes(maxStderrSize), toMap(sshConfig), allocatePty);
         }
-        
+
         private Options(long connectTimeout, long sessionTimeout, long maxStdoutBytes, long maxStderrBytes, Map<String, String> sshConfig, boolean allocatePty) {
             Assert.isTrue(connectTimeout >= 0 && connectTimeout <= Integer.MAX_VALUE, "Connect timeout must be >= 0 and <= Integer.MAX_VALUE ms");
             Assert.isTrue(sessionTimeout >= 0, "Session timeout must be >= 0 ms");
@@ -192,11 +187,11 @@ public final class JschSshClient implements SshClient {
             this.sessionTimeout = sessionTimeout;
             this.maxStdoutBytes = maxStdoutBytes;
             this.maxStderrBytes = maxStderrBytes;
-            this.sshConfig = sshConfig != null ? 
+            this.sshConfig = sshConfig != null ?
                     Collections.unmodifiableMap(sshConfig) : Collections.<String, String>emptyMap();
             this.allocatePty = allocatePty;
         }
-        
+
         private static long toMillis(String timeout) {
             Assert.hasText(timeout, "Timeout must not be null or empty");
             for (Map.Entry<String, Long> entry : TIME_UNITS.entrySet()) {
@@ -208,7 +203,7 @@ public final class JschSshClient implements SshClient {
             }
             throw new IllegalArgumentException("Invalid timeout value: " + timeout + " (no unit specified?)");
         }
-        
+
         private static long toBytes(String bufferSize) {
             Assert.hasText(bufferSize, "Buffer size must not be null or empty");
             for (Map.Entry<String, Long> entry : BYTE_UNITS.entrySet()) {
@@ -220,7 +215,7 @@ public final class JschSshClient implements SshClient {
             }
             throw new IllegalArgumentException("Invalid buffer size: " + bufferSize);
         }
-        
+
         private static Map<String, String> toMap(String sshConfig) {
             Map<String, String> map = new LinkedHashMap<String, String>();
             if (sshConfig != null && !sshConfig.trim().isEmpty()) {
@@ -235,7 +230,7 @@ public final class JschSshClient implements SshClient {
             }
             return map;
         }
-        
+
         private static Map<String, Long> timeUnits() {
             Map<String, Long> map = new LinkedHashMap<String, Long>(5);
             map.put("ms", 1L);
@@ -245,7 +240,7 @@ public final class JschSshClient implements SshClient {
             map.put("d", 1L * 1000 * 60 * 60 * 24);
             return Collections.unmodifiableMap(map);
         }
-        
+
         private static Map<String, Long> byteUnits() {
             Map<String, Long> map = new LinkedHashMap<String, Long>(4);
             map.put("B", 1L);

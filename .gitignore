@@ -1,5 +1,6 @@
 target
 src/main/resources
 src/test/resources/id_rsa*
-.idea
-simple-ssh-client.iml
+.classpath
+.project
+.settings
