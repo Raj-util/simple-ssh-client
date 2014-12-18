@@ -20,7 +20,7 @@ Utilizes the [Jsch](http://www.jcraft.com/jsch) SSH 2 library.
         <dependency>
             <groupId>fi.jpalomaki.ssh</groupId>
             <artifactId>simple-ssh-client</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.2</version>
         </dependency>
     </dependencies>
 
